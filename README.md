@@ -5,7 +5,7 @@
 ## Getting Started
 
 
-Scrolly Video js is responsive scrollable videos without obscure video encoding requirements. Compatible with React, Svelte, Vue, and plain HTML.
+Scrolly Video is a javascript library that can execute responsive scrollable videos without obscure video encoding requirements. Compatible with React, Svelte, Vue, and plain HTML.
 
 <br />
 <br />
