@@ -4498,7 +4498,6 @@ var ScrollyVideo = (function () {
             this.data.set(t, this.idx), (this.idx += t.length);
         }
     }
-    
     let w = (t, e, { VideoDecoder: i, EncodedVideoChunk: s, debug: r }) =>
     new Promise((n, a) => {
       r && console.info("Decoding video from", t);
