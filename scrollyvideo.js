@@ -4498,123 +4498,120 @@ var ScrollyVideo = (function () {
             this.data.set(t, this.idx), (this.idx += t.length);
         }
     }
-
-
+    
     let w = (t, e, { VideoDecoder: i, EncodedVideoChunk: s, debug: r }) =>
-  new Promise((n, a) => {
-    r && console.info("Decoding video from", t);
-    try {
-      let o = b.createFile(),
-        h,
-        d = new i({
-          output(t) {
-            createImageBitmap(t, { resizeQuality: "low" })
-              .then((i) => {
-                e(i);
-                t.close();
-              })
-              .catch((error) => {
-                console.error("Image bitmap creation failed:", error);
-              });
-          },
-          error(t) {
-            console.error("Decoding error:", t);
-            a(t);
-          },
-        });
-      (o.onReady = (t) => {
-        if (t && t.videoTracks && t.videoTracks[0]) {
-          ([{ codec: h }] = t.videoTracks);
-          r && console.info("Video with codec:", h);
-          let e = ((t) => {
-            let e,
-              i = 7;
-            for (e = 0; e < t.SPS.length; e += 1)
-              i += 2 + t.SPS[e].length;
-            for (e = 0; e < t.PPS.length; e += 1)
-              i += 2 + t.PPS[e].length;
-            let s = new v(i);
-            for (
-              s.writeUint8(t.configurationVersion),
-                s.writeUint8(t.AVCProfileIndication),
-                s.writeUint8(t.profile_compatibility),
-                s.writeUint8(t.AVCLevelIndication),
-                s.writeUint8(t.lengthSizeMinusOne + 252),
-                s.writeUint8(t.nb_SPS_nalus + 224),
-                e = 0;
-              e < t.SPS.length;
-              e += 1
-            )
-              s.writeUint16(t.SPS[e].length),
-                s.writeUint8Array(t.SPS[e].nalu);
-            for (
-              s.writeUint8(t.nb_PPS_nalus),
-                e = 0;
-              e < t.PPS.length;
-              e += 1
-            )
-              s.writeUint16(t.PPS[e].length),
-                s.writeUint8Array(t.PPS[e].nalu);
-            return s.getData();
-          })(o.moov.traks[0].mdia.minf.stbl.stsd.entries[0].avcC);
-          d.configure({ codec: h, description: e });
-          o.setExtractionOptions(t.videoTracks[0].id);
-          o.start();
-        } else {
-          a(Error("URL provided is not a valid mp4 video file."));
-        }
-      });
-      (o.onSamples = (t, e, i) => {
-        for (let r = 0; r < i.length; r += 1) {
-          let n = i[r],
-            a = n.is_sync ? "key" : "delta",
-            o = new s({ type: a, timestamp: n.cts, duration: n.duration, data: n.data });
-          try {
-            d.decode(o);
-          } catch (error) {
-            console.error("Decoding error:", error);
+    new Promise((n, a) => {
+      r && console.info("Decoding video from", t);
+      try {
+        let o = b.createFile(),
+          h,
+          d = new i({
+            output(t) {
+              createImageBitmap(t, { resizeQuality: "low" })
+                .then((i) => {
+                  e(i);
+                  t.close();
+                })
+                .catch((error) => {
+                  console.error("Image bitmap creation failed:", error);
+                });
+            },
+            error(t) {
+              console.error("Decoding error:", t);
+            },
+          });
+        (o.onReady = (t) => {
+          if (t && t.videoTracks && t.videoTracks[0]) {
+            ([{ codec: h }] = t.videoTracks);
+            r && console.info("Video with codec:", h);
+            let e = ((t) => {
+              let e,
+                i = 7;
+              for (e = 0; e < t.SPS.length; e += 1)
+                i += 2 + t.SPS[e].length;
+              for (e = 0; e < t.PPS.length; e += 1)
+                i += 2 + t.PPS[e].length;
+              let s = new v(i);
+              for (
+                s.writeUint8(t.configurationVersion),
+                  s.writeUint8(t.AVCProfileIndication),
+                  s.writeUint8(t.profile_compatibility),
+                  s.writeUint8(t.AVCLevelIndication),
+                  s.writeUint8(t.lengthSizeMinusOne + 252),
+                  s.writeUint8(t.nb_SPS_nalus + 224),
+                  e = 0;
+                e < t.SPS.length;
+                e += 1
+              )
+                s.writeUint16(t.SPS[e].length),
+                  s.writeUint8Array(t.SPS[e].nalu);
+              for (
+                s.writeUint8(t.nb_PPS_nalus),
+                  e = 0;
+                e < t.PPS.length;
+                e += 1
+              )
+                s.writeUint16(t.PPS[e].length),
+                  s.writeUint8Array(t.PPS[e].nalu);
+              return s.getData();
+            })(o.moov.traks[0].mdia.minf.stbl.stsd.entries[0].avcC);
+            d.configure({ codec: h, description: e });
+            o.setExtractionOptions(t.videoTracks[0].id);
+            o.start();
+          } else {
+            a(Error("URL provided is not a valid mp4 video file."));
           }
-        }
-      });
-      fetch(t)
-        .then((t) => {
-          let e = t.body.getReader(),
-            i = 0;
-          const readChunk = () => {
-            e
-              .read()
-              .then(({ done, value }) => {
-                if (done) {
-                  o.flush();
-                  n();
-                  return;
-                }
-                let n = value.buffer;
-                (n.fileStart = i), (i += n.byteLength);
-                try {
-                  o.appendBuffer(n);
-                } catch (error) {
-                  console.error("Buffer append error:", error);
-                }
-                readChunk();
-              })
-              .catch((error) => {
-                console.error("Reading video data failed:", error);
-                a(error);
-              });
-          };
-          readChunk();
-        })
-        .catch((error) => {
-          console.error("Fetching video failed:", error);
-          a(error);
         });
-    } catch (l) {
-      console.error("Decoding error:", l);
-      a(l);
-    }
-  });
-
+        (o.onSamples = (t, e, i) => {
+          for (let r = 0; r < i.length; r += 1) {
+            let n = i[r],
+              a = n.is_sync ? "key" : "delta",
+              o = new s({ type: a, timestamp: n.cts, duration: n.duration, data: n.data });
+            try {
+              d.decode(o);
+            } catch (error) {
+              console.error("Decoding error:", error);
+            }
+          }
+        });
+        fetch(t)
+          .then((t) => {
+            let e = t.body.getReader(),
+              i = 0;
+            const readChunk = () => {
+              e
+                .read()
+                .then(({ done, value }) => {
+                  if (done) {
+                    o.flush();
+                    n();
+                    return;
+                  }
+                  let n = value.buffer;
+                  (n.fileStart = i), (i += n.byteLength);
+                  try {
+                    o.appendBuffer(n);
+                  } catch (error) {
+                    console.error("Buffer append error:", error);
+                  }
+                  readChunk();
+                })
+                .catch((error) => {
+                  console.error("Reading video data failed:", error);
+                  a(error);
+                });
+            };
+            readChunk();
+          })
+          .catch((error) => {
+            console.error("Fetching video failed:", error);
+            a(error);
+          });
+      } catch (l) {
+        console.error("Decoding error:", l);
+        a(l);
+      }
+    });
   
 
     return class {
