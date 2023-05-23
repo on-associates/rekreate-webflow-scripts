@@ -4498,72 +4498,75 @@ var ScrollyVideo = (function () {
             this.data.set(t, this.idx), (this.idx += t.length);
         }
     }
-    try {
-        const decodeVideos = document.querySelectorAll('video');
-      
-        const decodeVideo = (video) => {
-          return new Promise((resolve, reject) => {
-            const { VideoDecoder, EncodedVideoChunk, debug } = window;
-      
-            debug && console.info("Decoding video from", video.src);
-      
-            const decoder = new VideoDecoder({
-              output(frame) {
-                createImageBitmap(frame, { resizeQuality: "high" })
-                  .then((imageBitmap) => {
-                    video.poster = imageBitmap.src;
-                    frame.close();
-      
-                    if (decoder.decodeQueueSize <= 0) {
-                      setTimeout(() => {
-                        if (decoder.state !== "closed") {
-                          decoder.close();
-                          resolve();
+    let w = (t, e, { VideoDecoder: i, EncodedVideoChunk: s, debug: r }) =>
+        new Promise((n, a) => {
+            r && console.info("Decoding video from", t);
+            try {
+                let o = b.createFile(),
+                    h,
+                    d = new i({
+                        output(t) {
+                            createImageBitmap(t, { resizeQuality: "high" }).then((i) => {
+                                e(i),
+                                    t.close(),
+                                    d.decodeQueueSize <= 0 &&
+                                    setTimeout(() => {
+                                        "closed" !== d.state && (d.close(), n());
+                                    }, 12e3);
+                            });
+                        },
+                        error(t) {
+                            console.error(t), a(t);
+                        },
+                    });
+                (o.onReady = (t) => {
+                    if (t && t.videoTracks && t.videoTracks[0]) {
+                        ([{ codec: h }] = t.videoTracks), r && console.info("Video with codec:", h);
+                        let e = ((t) => {
+                            let e,
+                                i = 7;
+                            for (e = 0; e < t.SPS.length; e += 1) i += 2 + t.SPS[e].length;
+                            for (e = 0; e < t.PPS.length; e += 1) i += 2 + t.PPS[e].length;
+                            let s = new v(i);
+                            for (
+                                s.writeUint8(t.configurationVersion),
+                                s.writeUint8(t.AVCProfileIndication),
+                                s.writeUint8(t.profile_compatibility),
+                                s.writeUint8(t.AVCLevelIndication),
+                                s.writeUint8(t.lengthSizeMinusOne + 252),
+                                s.writeUint8(t.nb_SPS_nalus + 224),
+                                e = 0;
+                                e < t.SPS.length;
+                                e += 1
+                            )
+                                s.writeUint16(t.SPS[e].length), s.writeUint8Array(t.SPS[e].nalu);
+                            for (s.writeUint8(t.nb_PPS_nalus), e = 0; e < t.PPS.length; e += 1) s.writeUint16(t.PPS[e].length), s.writeUint8Array(t.PPS[e].nalu);
+                            return s.getData();
+                        })(o.moov.traks[0].mdia.minf.stbl.stsd.entries[0].avcC);
+                        d.configure({ codec: h, description: e }), o.setExtractionOptions(t.videoTracks[0].id), o.start();
+                    } else a(Error("URL provided is not a valid mp4 video file."));
+                }),
+                    (o.onSamples = (t, e, i) => {
+                        for (let r = 0; r < i.length; r += 1) {
+                            let n = i[r],
+                                a = n.is_sync ? "key" : "delta",
+                                o = new s({ type: a, timestamp: n.cts, duration: n.duration, data: n.data });
+                            d.decode(o);
                         }
-                      }, 12000);
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Error creating image bitmap:", error);
-                    reject(error);
-                  });
-              },
-              error(error) {
-                console.error("Video decoding error:", error);
-                reject(error);
-              },
-            });
-      
-            fetch(video.src)
-              .then((response) => response.arrayBuffer())
-              .then((arrayBuffer) => {
-                const videoData = new Uint8Array(arrayBuffer);
-                const chunk = new EncodedVideoChunk({ type: "key", timestamp: 0, data: videoData });
-                decoder.decode(chunk);
-              })
-              .catch((error) => {
-                console.error("Error fetching video data:", error);
-                reject(error);
-              });
-          });
-        };
-      
-        const decodeAllVideos = async () => {
-          try {
-            for (const video of decodeVideos) {
-              await decodeVideo(video);
+                    }),
+                    fetch(t).then((t) => {
+                        let e = t.body.getReader(),
+                            i = 0;
+                        return e.read().then(function t({ done: s, value: r }) {
+                            if (s) return o.flush(), null;
+                            let n = r.buffer;
+                            return (n.fileStart = i), (i += n.byteLength), o.appendBuffer(n), e.read().then(t);
+                        });
+                    });
+            } catch (l) {
+                a(l);
             }
-          } catch (error) {
-            console.error("Video decoding error:", error);
-          }
-        };
-      
-        decodeAllVideos();
-      } catch (error) {
-        console.error("Error decoding videos:", error);
-        // Handle the error gracefully, such as displaying an error message or fallback behavior.
-      }
-      
+        });
     return class {
         constructor({ src: t, scrollyVideoContainer: e, cover: i = !0, sticky: s = !0, full: r = !0, trackScroll: n = !0, transitionSpeed: a = 8, frameThreshold: o = 0.1, useWebCodecs: h = !0, debug: d = !1 }) {
             if ("object" != typeof document) return void console.error("ScrollyVideo must be initiated in a DOM context");
@@ -4743,3 +4746,40 @@ var ScrollyVideo = (function () {
         }
     };
 })();
+
+// Modified code with decodeVideos variable
+const decodeVideos = document.querySelectorAll('video');
+
+function decodeVideo(video) {
+  return new Promise((resolve, reject) => {
+    video.addEventListener('canplaythrough', function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('3d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      resolve(canvas.toDataURL());
+    });
+
+    video.addEventListener('error', function () {
+      reject(new Error('Failed to decode video.'));
+    });
+
+    video.load();
+  });
+}
+
+async function processVideos() {
+  try {
+    for (const video of decodeVideos) {
+      await decodeVideo(video);
+      console.log('Video decoded successfully.');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+processVideos();
