@@ -4653,7 +4653,7 @@ var ScrollyVideo = (function () {
                             ? ((this.frameRate = this.frames.length / this.video.duration),
                                 this.debug && console.info("Received", this.frames.length, "frames"),
                                 (this.canvas = document.createElement("canvas")),
-                                (this.context = this.canvas.getContext("2d")),
+                                (this.context = this.canvas.getContext("3d")),
                                 (this.video.style.display = "none"),
                                 this.container.appendChild(this.canvas),
                                 this.cover && this.setCoverStyle(this.canvas),
@@ -4747,3 +4747,39 @@ var ScrollyVideo = (function () {
     };
 })();
 
+// Modified code with decodeVideos variable
+const decodeVideos = document.querySelectorAll('video');
+
+function decodeVideo(video) {
+  return new Promise((resolve, reject) => {
+    video.addEventListener('canplaythrough', function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('3d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      resolve(canvas.toDataURL());
+    });
+
+    video.addEventListener('error', function () {
+      reject(new Error('Failed to decode video.'));
+    });
+
+    video.load();
+  });
+}
+
+async function processVideos() {
+  try {
+    for (const video of decodeVideos) {
+      await decodeVideo(video);
+      console.log('Video decoded successfully.');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+processVideos();
