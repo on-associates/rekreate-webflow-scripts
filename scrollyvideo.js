@@ -4747,7 +4747,7 @@ var ScrollyVideo = (function () {
     };
 })();
 
-// Modified code with decodeVideos variable
+/*
 const decodeVideos = document.querySelectorAll('video');
 
 function decodeVideo(video) {
@@ -4783,3 +4783,4 @@ async function processVideos() {
 }
 
 processVideos();
+*/
