@@ -4585,7 +4585,7 @@ var ScrollyVideo = (function () {
                 (this.debug = d),
                 (this.video = document.createElement("video")),
                 (this.video.src = t),
-                (this.video.preload = "auto"),
+                (this.video.preload = "preload"),
                 (this.video.tabIndex = 0),
                 (this.video.autobuffer = !0),
                 (this.video.playsInline = !0),
@@ -4746,41 +4746,3 @@ var ScrollyVideo = (function () {
         }
     };
 })();
-
-/*
-const decodeVideos = document.querySelectorAll('video');
-
-function decodeVideo(video) {
-  return new Promise((resolve, reject) => {
-    video.addEventListener('canplaythrough', function () {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('3d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      resolve(canvas.toDataURL());
-    });
-
-    video.addEventListener('error', function () {
-      reject(new Error('Failed to decode video.'));
-    });
-
-    video.load();
-  });
-}
-
-async function processVideos() {
-  try {
-    for (const video of decodeVideos) {
-      await decodeVideo(video);
-      console.log('Video decoded successfully.');
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-processVideos();
-*/
