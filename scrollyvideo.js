@@ -4653,7 +4653,7 @@ var ScrollyVideo = (function () {
                             ? ((this.frameRate = this.frames.length / this.video.duration),
                                 this.debug && console.info("Received", this.frames.length, "frames"),
                                 (this.canvas = document.createElement("canvas")),
-                                (this.context = this.canvas.getContext("3d")),
+                                (this.context = this.canvas.getContext("2d")),
                                 (this.video.style.display = "none"),
                                 this.container.appendChild(this.canvas),
                                 this.cover && this.setCoverStyle(this.canvas),
