@@ -4512,7 +4512,7 @@ var ScrollyVideo = (function () {
                                     d.decodeQueueSize <= 0 &&
                                     setTimeout(() => {
                                         "closed" !== d.state && (d.close(), n());
-                                    }, 12e3);
+                                    }, 1);
                             });
                         },
                         error(t) {
